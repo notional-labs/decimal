@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/apmckinlay/gsuneido/util/dnum"
-	"github.com/cockroachdb/apd"
+	apd "github.com/cockroachdb/apd/v3"
 	"github.com/ericlagergren/decimal"
 	ssdec "github.com/shopspring/decimal"
 	"gopkg.in/inf.v0"

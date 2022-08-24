@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/apmckinlay/gsuneido/util/dnum"
-	"github.com/cockroachdb/apd"
+	apd "github.com/cockroachdb/apd/v3"
 	"github.com/ericlagergren/decimal"
 	ssdec "github.com/shopspring/decimal"
 	"gopkg.in/inf.v0"
@@ -69,30 +69,33 @@ got : %q
 }
 
 func BenchmarkPi(b *testing.B) {
-	for _, pkg := range [...]struct {
-		pkg string
-		fn  func(prec int)
-	}{
-		{"ericlagergren (Go)", benchmarkPi_decimal_Go},
-		{"ericlagergren (GDA)", benchmarkPi_decimal_GDA},
-		{"cockroachdb/apd", benchmarkPi_apd},
-		{"shopspring", benchmarkPi_shopspring},
-		{"apmckinlay", benchmarkPi_dnum},
-		{"go-inf", benchmarkPi_inf},
-		{"float64", benchmarkPi_float64},
-	} {
-		pkg := pkg
-		b.Run(fmt.Sprintf("foo=%s", pkg.pkg), func(b *testing.B) {
-			for _, p := range [...]int{9, 19, 38, 100} {
+	for _, p := range [...]int{9, 19, 38, 100} {
+		for _, pkg := range [...]struct {
+			pkg string
+			fn  func(prec int)
+		}{
+			{"ericlagergren (Go)", benchmarkPi_decimal_Go},
+			{"ericlagergren (GDA)", benchmarkPi_decimal_GDA},
+			{"cockroachdb/apd", benchmarkPi_apd},
+			{"shopspring", benchmarkPi_shopspring},
+			{"apmckinlay", benchmarkPi_dnum},
+			{"go-inf", benchmarkPi_inf},
+			{"float64", benchmarkPi_float64},
+		} {
+			pkg := pkg
+			b.Run(fmt.Sprintf("foo=%s", pkg.pkg), func(b *testing.B) {
 				p := p
 				b.Run(fmt.Sprintf("prec=%d", p), func(b *testing.B) {
 					for i := 0; i < b.N; i++ {
 						pkg.fn(p)
 					}
 				})
-			}
-		})
+
+			})
+		}
+
 	}
+
 }
 
 var gdec *decimal.Big
