@@ -2,6 +2,9 @@ package benchmarks
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/apmckinlay/gsuneido/util/dnum"
@@ -93,9 +96,7 @@ func BenchmarkPi(b *testing.B) {
 
 			})
 		}
-
 	}
-
 }
 
 var gdec *decimal.Big
@@ -122,3 +123,62 @@ func benchmarkPi_dnum(_ int) { gdnum = PiDnum() }
 var gf float64
 
 func benchmarkPi_float64(_ int) { gf = PiFloat64() }
+
+func RandNumber(prec int) string {
+	var num strings.Builder
+
+	radix := rand.Intn(prec-1) + 1
+
+	for i := 0; i < prec+1; i++ {
+		if i == radix {
+			num.WriteString(".")
+		} else {
+			num.WriteString(strconv.Itoa(rand.Intn(9) + 1))
+		}
+	}
+
+	return num.String()
+
+	// return "2.2"
+
+}
+
+func BenchmarkMultiplication(b *testing.B) {
+	for _, p := range [...]int{9, 19, 38, 100} {
+		x := RandNumber(p)
+		y := RandNumber(p)
+		fmt.Println(x)
+		fmt.Println(y)
+		for _, pkg := range [...]struct {
+			pkg string
+			fn  func(x string, y string, prec int, b *testing.B) string
+		}{
+			{"ericlagergren (Go)", MulDecimal_Go},
+			{"ericlagergren (GDA)", MulDecimal_GDA},
+			{"cockroachdb/apd", MulAPD},
+			{"shopspring", MulShopSpring},
+			{"go-inf", MulInf},
+		} {
+			fmt.Println(pkg.fn(x, y, p, b))
+		}
+	}
+}
+
+// func benchmarkMul_decimal_Go(x string, y string, prec int, b *testing.B) {
+// 	gdec = MulDecimal_Go(x, y, prec, b)
+// }
+// func benchmarkMul_decimal_GDA(x string, y string, prec int, b *testing.B) {
+// 	gdec = MulDecimal_GDA(x, y, prec, b)
+// }
+
+// func benchmarkMul_apd(x string, y string, prec int, b *testing.B) { gapd = MulAPD(x, y, prec, b) }
+
+// func benchmarkMul_shopspring(x string, y string, prec int, b *testing.B) {
+// 	gssdec = MulShopSpring(x, y, prec, b)
+// }
+
+// func benchmarkMul_inf(x string, y string, prec int, b *testing.B) { ginf = MulInf(x, y, int(prec), b) }
+
+// func benchmarkMul_dnum(_ int) { gdnum = PiDnum() }
+
+// func benchmarkMul_float64(_ int) { gf = PiFloat64() }

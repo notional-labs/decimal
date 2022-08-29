@@ -1,11 +1,17 @@
 package benchmarks
 
 import (
+	"fmt"
 	"math"
+	"math/big"
+	"strings"
+	"testing"
 
 	"github.com/apmckinlay/gsuneido/util/dnum"
 	apd "github.com/cockroachdb/apd/v3"
 	"github.com/ericlagergren/decimal"
+	"github.com/stretchr/testify/require"
+
 	ssdec "github.com/shopspring/decimal"
 	"gopkg.in/inf.v0"
 )
@@ -238,4 +244,126 @@ func PiAPD(prec uint32) *apd.Decimal {
 	ctx.Precision = prec
 	ctx.Round(s, s)
 	return s
+}
+
+func StringToInf(x string) *inf.Dec {
+
+	x_splited := strings.Split(x, ".")
+
+	x_natural := x_splited[0]
+
+	// a_natural_bigint, _ := new(big.Int).SetString(a_natural, 0)
+
+	x_fractional := x_splited[1]
+
+	scale := len(x_fractional)
+
+	x_uncaled, success := new(big.Int).SetString(x_natural+x_fractional, 0)
+
+	if !success {
+		panic("fail to create inf.Dec from string")
+	}
+
+	return inf.NewDecBig(x_uncaled, inf.Scale(scale))
+}
+
+func MulInf(x string, y string, prec int, b *testing.B) string {
+
+	x_dec := StringToInf(x)
+
+	y_dec := StringToInf(y)
+
+	z_dec := new(inf.Dec)
+
+	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "go-inf"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			// t.QuoRound(t, d, inf.Scale(work), inf.RoundHalfUp)
+			z_dec.Mul(x_dec, y_dec)
+		}
+	})
+
+	return z_dec.String()
+}
+
+func MulShopSpring(x string, y string, prec int, b *testing.B) string {
+	dec_x, _ := ssdec.NewFromString(x)
+	dec_y, _ := ssdec.NewFromString(y)
+
+	// -1 because shopSpring's prec == digits after radix
+	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "shopspring"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			dec_x.Mul(dec_y)
+		}
+	})
+
+	return dec_x.Mul(dec_y).String()
+}
+
+func MulDecimal_Go(x string, y string, prec int, b *testing.B) string {
+	var (
+		ctx = decimal.Context{
+			Precision:     prec,
+			OperatingMode: decimal.Go,
+		}
+	)
+
+	x_dec, _ := new(decimal.Big).SetString(x)
+
+	y_dec, _ := new(decimal.Big).SetString(x)
+
+	z_dec := new(decimal.Big)
+
+	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "ericlagergren (Go)"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Mul(z_dec, x_dec, y_dec)
+		}
+	})
+
+	return z_dec.String()
+}
+
+func MulDecimal_GDA(x string, y string, prec int, b *testing.B) string {
+	var (
+		ctx = decimal.Context{
+			Precision:     prec,
+			OperatingMode: decimal.GDA,
+		}
+	)
+
+	x_dec, _ := new(decimal.Big).SetString(x)
+
+	y_dec, _ := new(decimal.Big).SetString(x)
+
+	z_dec := new(decimal.Big)
+
+	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "ericlagergren (GDA)"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Mul(z_dec, x_dec, y_dec)
+		}
+	})
+
+	return z_dec.String()
+}
+
+// PiAPD calculates π to the desired precision using github.com/cockroachdb/apd.
+func MulAPD(x string, y string, prec int, b *testing.B) string {
+	var (
+		ctx = apd.BaseContext.WithPrecision(uint32(prec))
+	)
+
+	x_dec, _, err := ctx.NewFromString(x)
+	require.NoError(b, err)
+
+	y_dec, _, err := ctx.NewFromString(y)
+	require.NoError(b, err)
+
+	z_dec := new(apd.Decimal)
+
+	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "cockroachdb/apd"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Mul(z_dec, x_dec, y_dec)
+		}
+	})
+
+	return z_dec.String()
 }
