@@ -273,12 +273,16 @@ func MulInf(x string, y string, prec int, b *testing.B) string {
 
 	y_dec := StringToInf(y)
 
+	fmt.Println(x_dec.Scale())
+	fmt.Println(x_dec.UnscaledBig())
+
 	z_dec := new(inf.Dec)
 
 	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "go-inf"), func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			// t.QuoRound(t, d, inf.Scale(work), inf.RoundHalfUp)
 			z_dec.Mul(x_dec, y_dec)
+			z_dec.Round(z_dec, inf.Scale(0), inf.RoundHalfDown)
 		}
 	})
 
@@ -309,13 +313,14 @@ func MulDecimal_Go(x string, y string, prec int, b *testing.B) string {
 
 	x_dec, _ := new(decimal.Big).SetString(x)
 
-	y_dec, _ := new(decimal.Big).SetString(x)
+	y_dec, _ := new(decimal.Big).SetString(y)
 
 	z_dec := new(decimal.Big)
 
 	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "ericlagergren (Go)"), func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			ctx.Mul(z_dec, x_dec, y_dec)
+			ctx.Round(z_dec)
 		}
 	})
 
@@ -332,7 +337,7 @@ func MulDecimal_GDA(x string, y string, prec int, b *testing.B) string {
 
 	x_dec, _ := new(decimal.Big).SetString(x)
 
-	y_dec, _ := new(decimal.Big).SetString(x)
+	y_dec, _ := new(decimal.Big).SetString(y)
 
 	z_dec := new(decimal.Big)
 

@@ -144,7 +144,7 @@ func RandNumber(prec int) string {
 }
 
 func BenchmarkMultiplication(b *testing.B) {
-	for _, p := range [...]int{9, 19, 38, 100} {
+	for _, p := range [...]int{9} {
 		x := RandNumber(p)
 		y := RandNumber(p)
 		fmt.Println(x)
