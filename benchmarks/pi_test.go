@@ -144,7 +144,7 @@ func RandNumber(prec int) string {
 }
 
 func BenchmarkMultiplication(b *testing.B) {
-	for _, p := range [...]int{9} {
+	for _, p := range [...]int{38} {
 		x := RandNumber(p)
 		y := RandNumber(p)
 		fmt.Println(x)
@@ -164,21 +164,23 @@ func BenchmarkMultiplication(b *testing.B) {
 	}
 }
 
-// func benchmarkMul_decimal_Go(x string, y string, prec int, b *testing.B) {
-// 	gdec = MulDecimal_Go(x, y, prec, b)
-// }
-// func benchmarkMul_decimal_GDA(x string, y string, prec int, b *testing.B) {
-// 	gdec = MulDecimal_GDA(x, y, prec, b)
-// }
-
-// func benchmarkMul_apd(x string, y string, prec int, b *testing.B) { gapd = MulAPD(x, y, prec, b) }
-
-// func benchmarkMul_shopspring(x string, y string, prec int, b *testing.B) {
-// 	gssdec = MulShopSpring(x, y, prec, b)
-// }
-
-// func benchmarkMul_inf(x string, y string, prec int, b *testing.B) { ginf = MulInf(x, y, int(prec), b) }
-
-// func benchmarkMul_dnum(_ int) { gdnum = PiDnum() }
-
-// func benchmarkMul_float64(_ int) { gf = PiFloat64() }
+func BenchmarkQuotation(b *testing.B) {
+	for _, p := range [...]int{38} {
+		x := RandNumber(p)
+		y := RandNumber(p)
+		fmt.Println(x)
+		fmt.Println(y)
+		for _, pkg := range [...]struct {
+			pkg string
+			fn  func(x string, y string, prec int, b *testing.B) string
+		}{
+			{"ericlagergren (Go)", QuoDecimal_Go},
+			{"ericlagergren (GDA)", QuoDecimal_GDA},
+			{"cockroachdb/apd", QuoAPD},
+			{"shopspring", QuoShopSpring},
+			{"go-inf", QuoInf},
+		} {
+			fmt.Println(pkg.fn(x, y, p, b), pkg.pkg)
+		}
+	}
+}
