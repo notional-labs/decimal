@@ -184,3 +184,24 @@ func BenchmarkQuotation(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkAddition(b *testing.B) {
+	for _, p := range [...]int{38} {
+		x := RandNumber(p)
+		y := RandNumber(p)
+		fmt.Println(x)
+		fmt.Println(y)
+		for _, pkg := range [...]struct {
+			pkg string
+			fn  func(x string, y string, prec int, b *testing.B) string
+		}{
+			{"ericlagergren (Go)", AddDecimal_Go},
+			{"ericlagergren (GDA)", AddDecimal_GDA},
+			{"cockroachdb/apd", AddAPD},
+			{"shopspring", AddShopSpring},
+			{"go-inf", AddInf},
+		} {
+			fmt.Println(pkg.fn(x, y, p, b), pkg.pkg)
+		}
+	}
+}
