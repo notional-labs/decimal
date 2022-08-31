@@ -378,9 +378,6 @@ func QuoInf(x string, y string, prec int, b *testing.B) string {
 
 	y_dec := StringToInf(y)
 
-	fmt.Println(x_dec.Scale())
-	fmt.Println(x_dec.UnscaledBig())
-
 	z_dec := new(inf.Dec)
 
 	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "go-inf"), func(b *testing.B) {
