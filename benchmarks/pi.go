@@ -319,7 +319,7 @@ func MulDecimal_Go(x string, y string, prec int, b *testing.B) string {
 	b.Run(fmt.Sprintf("prec=%d/pkg=%s", prec, "ericlagergren (Go)"), func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			ctx.Mul(z_dec, x_dec, y_dec)
-			// ctx.Round(z_dec)
+			ctx.Round(z_dec)
 		}
 	})
 
@@ -509,7 +509,7 @@ func AddShopSpring(x string, y string, prec int, b *testing.B) string {
 		}
 	})
 
-	return dec_x.Div(dec_y).String()
+	return dec_x.Add(dec_y).String()
 }
 
 func AddDecimal_Go(x string, y string, prec int, b *testing.B) string {
@@ -580,4 +580,87 @@ func AddAPD(x string, y string, prec int, b *testing.B) string {
 	})
 
 	return z_dec.String()
+}
+
+func RoundInf(x string, b *testing.B) string {
+
+	x_dec := StringToInf(x)
+
+	b.Run(fmt.Sprintf("pkg=%s", "go-inf"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			x_dec.Round(x_dec, inf.Scale(18), inf.RoundHalfUp)
+		}
+	})
+
+	return x_dec.String()
+}
+
+func RoundShopSpring(x string, b *testing.B) string {
+	dec_x, _ := ssdec.NewFromString(x)
+
+	// -1 because shopSpring's prec == digits after radix
+	b.Run(fmt.Sprintf("pkg=%s", "shopspring"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			dec_x.Round(18)
+		}
+	})
+
+	return dec_x.String()
+}
+
+func RoundDecimal_Go(x string, b *testing.B) string {
+	var (
+		ctx = decimal.Context{
+			Precision:     28,
+			OperatingMode: decimal.Go,
+		}
+	)
+
+	x_dec, _ := new(decimal.Big).SetString(x)
+
+	b.Run(fmt.Sprintf("pkg=%s", "ericlagergren (Go)"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Round(x_dec)
+			// ctx.Round(z_dec)
+		}
+	})
+
+	return x_dec.String()
+}
+
+func RoundDecimal_GDA(x string, b *testing.B) string {
+	var (
+		ctx = decimal.Context{
+			Precision:     28,
+			OperatingMode: decimal.GDA,
+		}
+	)
+
+	x_dec, _ := new(decimal.Big).SetString(x)
+
+	b.Run(fmt.Sprintf("pkg=%s", "ericlagergren (GDA)"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Round(x_dec)
+		}
+	})
+
+	return x_dec.String()
+}
+
+// PiAPD calculates π to the desired precision using github.com/cockroachdb/apd.
+func RoundAPD(x string, b *testing.B) string {
+	var (
+		ctx = apd.BaseContext.WithPrecision(uint32(28))
+	)
+
+	x_dec, _, err := ctx.NewFromString(x)
+	require.NoError(b, err)
+
+	b.Run(fmt.Sprintf("pkg=%s", "cockroachdb/apd"), func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx.Round(x_dec, x_dec)
+		}
+	})
+
+	return x_dec.String()
 }

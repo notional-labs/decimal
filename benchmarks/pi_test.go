@@ -205,3 +205,21 @@ func BenchmarkAddition(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkRounding(b *testing.B) {
+
+	x := "1234567890.09876543211234567890123456"
+
+	for _, pkg := range [...]struct {
+		pkg string
+		fn  func(x string, b *testing.B) string
+	}{
+		{"ericlagergren (Go)", RoundDecimal_Go},
+		{"ericlagergren (GDA)", RoundDecimal_GDA},
+		{"cockroachdb/apd", RoundAPD},
+		{"shopspring", RoundShopSpring},
+		{"go-inf", RoundInf},
+	} {
+		fmt.Println(pkg.fn(x, b), pkg.pkg)
+	}
+}
